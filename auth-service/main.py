@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 
 from models.user import User, UserRegister, UserResponse
-from services.crypto_service import encrypt_password
+from auth_py.crypto_service import encrypt_password
 
 load_dotenv()
 
