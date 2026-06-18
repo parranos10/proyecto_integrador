@@ -3,3 +3,4 @@ uvicorn
 sqlmodel
 argon2-cffi
 python-dotenv
+email-validator
