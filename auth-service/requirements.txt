@@ -2,3 +2,4 @@ fastapi
 uvicorn
 sqlmodel
 argon2-cffi
+python-dotenv
