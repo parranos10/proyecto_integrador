@@ -6,9 +6,21 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
+	"os"
 )
 
-var ClaveSecreta = []byte("1234-es-123-clave-1234567-de-12-bytes!")
+var ClaveSecreta = func() []byte {
+	key := os.Getenv("AES_KEY")
+	if len(key) == 0 {
+		return []byte("clave-secreta-defecto-32-bytes!!")
+	}
+	byteKey := []byte(key)
+	if len(byteKey) >= 32 {
+		return byteKey[:32]
+	}
+	padding := make([]byte, 32-len(byteKey))
+	return append(byteKey, padding...)
+}()
 
 func EncryptAESCBC(plainText []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)

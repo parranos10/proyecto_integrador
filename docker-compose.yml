@@ -2,19 +2,24 @@ version: '3.8'
 
 services:
   auth_api:
-    build: ./auth-service       
+    build: ./auth-service
     container_name: auth_fastapi_container
     ports:
       - "8000:8000"
     volumes:
-      - ./auth-service:/app     
+      - ./auth-service:/app
+    environment:
+      - PEPPER=proyecto-integrador_cyberseguridad_2026
+      - SECRET_KEY=clavesecretacyberseguridad
     restart: always
 
   image_service:
-    build: ./image-service      
+    build: ./image-service
     container_name: image_go_container
     ports:
       - "8080:8080"
     volumes:
-      - ./image-service/uploads:/app/uploads  
+      - ./image-service/uploads:/app/uploads
+    environment:
+      - AES_KEY=clave-secreta-aes-cbc-32bytes!
     restart: always
