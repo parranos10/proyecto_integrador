@@ -1,25 +1,19 @@
 import os
-import bcrypt
+from argon2 import PasswordHasher
 from dotenv import load_dotenv
 
+
 load_dotenv()
+PEPPER = os.getenv("PEPPER", "ClaveSeguraPorDefectoSiNoHayEnv")
+ph = PasswordHasher()
 
-PEPPER = os.getenv("PEPPER")
-
-def generate_salt():
-    return bcrypt.gensalt().decode("utf-8")
-
-def hash_password(password: str, salt: str):
+def hash_password(password: str) -> str:
     password_peppered = password + PEPPER
-    hashed = bcrypt.hashpw(
-        password_peppered.encode("utf-8"),
-        salt.encode("utf-8")
-    )
-    return hashed.decode("utf-8")
+    return ph.hash(password_peppered)
 
-def verify_password(password: str, salt: str, stored_hash: str):
+def verify_password(password: str, stored_hash: str) -> bool:
     password_peppered = password + PEPPER
-    return bcrypt.checkpw(
-        password_peppered.encode("utf-8"),
-        stored_hash.encode("utf-8")
-    )
+    try:
+        return ph.verify(stored_hash, password_peppered)
+    except Exception:
+        return False
