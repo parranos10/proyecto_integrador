@@ -3,9 +3,8 @@ from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from sqlmodel import SQLModel, Field, create_engine, Session, select
-
 from models.user import User, UserRegister, UserResponse
-from auth_py.crypto_service import encrypt_password
+from auth_py.auth import hash_password, verify_password  
 
 load_dotenv()
 
@@ -27,21 +26,21 @@ def get_session():
 
 @app.get("/")
 def home():
-    return {"message": "API de Autenticación con SQLModel y AES activa"}
+    return {"message": "API de Autenticación con SQLModel y Argon2 activa"}
 
 @app.post("/users/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def registrar_usuario(user_data: UserRegister, session: Session = Depends(get_session)):
-    statement = select(User).where(User.email == user_data.email)
+    statement = select(User).where((User.email == user_data.email) | (User.username == user_data.username))
     usuario_existente = session.exec(statement).first()
     if usuario_existente:
-        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+        raise HTTPException(status_code=400, detail="El correo o usuario ya está registrado")
     
-    password_cifrada = encrypt_password(user_data.password)
+    password_hash = hash_password(user_data.password)
     
     nuevo_usuario = User(
         username=user_data.username,
         email=user_data.email,
-        password=password_cifrada 
+        hashed_password=password_hash  
     )
     
     session.add(nuevo_usuario)
@@ -50,7 +49,20 @@ def registrar_usuario(user_data: UserRegister, session: Session = Depends(get_se
     
     return nuevo_usuario
 
-@app.get("/users", response_model=list[UserResponse])
-def listar_usuarios(session: Session = Depends(get_session)):
-    usuarios = session.exec(select(User)).all()
-    return usuarios
+@app.post("/users/login", status_code=status.HTTP_200_OK)
+def login_usuario(user_data: UserRegister, session: Session = Depends(get_session)):
+    # Buscamos al usuario por su correo
+    statement = select(User).where(User.email == user_data.email)
+    usuario = session.exec(statement).first()
+    
+    if not usuario:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
+    
+    es_valida = verify_password(user_data.password, usuario.hashed_password)
+    if not es_valida:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
+    
+    return {
+        "message": "Inicio de sesión exitoso",
+        "username": usuario.username
+    }
