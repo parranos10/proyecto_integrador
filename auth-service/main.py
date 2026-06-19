@@ -51,7 +51,6 @@ def registrar_usuario(user_data: UserRegister, session: Session = Depends(get_se
 
 @app.post("/users/login", status_code=status.HTTP_200_OK)
 def login_usuario(user_data: UserRegister, session: Session = Depends(get_session)):
-    # Buscamos al usuario por su correo
     statement = select(User).where(User.email == user_data.email)
     usuario = session.exec(statement).first()
     
